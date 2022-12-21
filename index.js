@@ -15,10 +15,13 @@ const uri = `mongodb+srv://admin:${process.env.DB_PASS}@cluster0.oxomeyh.mongodb
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
 const usersCollection = client.db("tic-tac-toe").collection("users");
+const gamesCollection = client.db("tic-tac-toe").collection("games");
 
 const run = async () => {
     try {
         client.connect();
+
+        // USER RELATED ROUTES
 
         app.post("/register", async (req, res) => {
             const user = req.body;
@@ -44,6 +47,32 @@ const run = async () => {
             else {
                 return res.send({ error: "user not found" })
             }
+        })
+        //-----------
+
+        // Game Related Routes
+
+        // Start a Game
+        app.post("/start-game", async (req, res) => {
+            const userEmail = req.body.user;
+            const partnerEmail = req.body.partner;
+            const user = await usersCollection.findOne({ email: userEmail })
+            const partner = await usersCollection.findOne({ email: partnerEmail });
+            if (!partner) {
+                return res.send({ error: "user not found. please enter a valid email" })
+            }
+
+            const game = {
+                players: [user.username, partner.username],
+                status: "Your Move",
+                lastUpdated: new Date()
+            };
+            const result = await gamesCollection.insertOne(game);
+
+            if (result.insertedId) {
+                return res.send({ success: true, insertedId: result.insertedId });
+            }
+
         })
 
     }
