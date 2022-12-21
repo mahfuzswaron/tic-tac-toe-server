@@ -35,8 +35,15 @@ const run = async () => {
                 return res.send({ success: "congrats, you've been joined!" });
             }
         })
-        app.get("/all-users", async (req, res) => {
-            console.log("user not found yet")
+        app.get("/userinfo/:username", async (req, res) => {
+            const username = req.params.username;
+            const user = await usersCollection.findOne({ username: username });
+            if (user) {
+                return res.send({ success: true, user: user })
+            }
+            else {
+                return res.send({ error: "user not found" })
+            }
         })
 
     }
