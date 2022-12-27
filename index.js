@@ -38,9 +38,16 @@ const run = async () => {
                 return res.send({ success: "congrats, you've been joined!" });
             }
         })
-        app.get("/userinfo/:username", async (req, res) => {
-            const username = req.params.username;
-            const user = await usersCollection.findOne({ username: username });
+        app.get("/userinfo", async (req, res) => {
+            const username = req.query.username;
+            const email = req.query.email;
+            let user;
+            if (username) {
+                user = await usersCollection.findOne({ username: username });
+            }
+            else if (email) {
+                user = await usersCollection.findOne({ email: email });
+            }
             if (user) {
                 return res.send({ success: true, user: user })
             }
@@ -61,18 +68,29 @@ const run = async () => {
             if (!partner) {
                 return res.send({ error: "user not found. please enter a valid email" })
             }
-
+            const move = user.username;
             const game = {
-                players: [user.username, partner.username],
-                status: "Your Move",
+                players: { initializer: user.username, partner: partner.username },
+                pieces: { "x": user.username, "o": partner.username },
+                move: user.username,
+                status: `${move}'s Move"`,
                 lastUpdated: new Date()
             };
+
             const result = await gamesCollection.insertOne(game);
 
             if (result.insertedId) {
                 return res.send({ success: true, insertedId: result.insertedId });
             }
+        });
 
+        // get all games
+        app.get("/all-games/:user", async (req, res) => {
+            const user = req.params.user;
+            const query = { $or: [{ "players.initializer": user }, { "players.partner": user }] }
+            const games = await gamesCollection.find(query).toArray();
+            console.log(games)
+            res.send(games);
         })
 
     }
