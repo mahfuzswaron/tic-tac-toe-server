@@ -2,7 +2,7 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 const bodyParser = require('body-parser');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const env = require("dotenv").config();
 const port = process.env.PORT || 5000;
 
@@ -73,7 +73,15 @@ const run = async () => {
                 players: { initializer: user.username, partner: partner.username },
                 pieces: { "x": user.username, "o": partner.username },
                 move: user.username,
-                status: `${move}'s Move"`,
+                board: {
+                    a1: "", a2: "", a3: "",
+                    b1: "", b2: "", b3: "",
+                    c1: "", c2: "", c3: ""
+                },
+                status: {
+                    finished: false,
+                    message: `${move}'s Move"`
+                },
                 lastUpdated: new Date()
             };
 
@@ -91,6 +99,14 @@ const run = async () => {
             const games = await gamesCollection.find(query).toArray();
             console.log(games)
             res.send(games);
+        });
+
+        // get single game 
+        app.get("/get-game/:id", async (req, res) => {
+            const id = ObjectId(req.params.id);
+            const query = { _id: id };
+            const game = await gamesCollection.findOne(query);
+            res.send(game);
         })
 
     }
