@@ -46,13 +46,13 @@ const gameResult = (board, pieces) => {
     else if (winnerPiece === "") {
         return null
     }
-    else {
+    else if (winnerPiece === null && !Object.values(board).filter(v => v === "").length) {
         return "draw"
     }
 
 };
 
-const alternateMove = (players, lastMove) => Object.values(players).find(p => p !== lastMove);
+const opponantPlayer = (players, lastMove) => Object.values(players).find(p => p !== lastMove);
 
 
 const run = async () => {
@@ -101,6 +101,7 @@ const run = async () => {
         app.post("/start-game", async (req, res) => {
             const userEmail = req.body.user;
             const partnerEmail = req.body.partner;
+            if (userEmail === partnerEmail) return res.send({ error: "sorry, you can't play against you" })
             const user = await usersCollection.findOne({ email: userEmail })
             const partner = await usersCollection.findOne({ email: partnerEmail });
             if (!partner) {
@@ -118,7 +119,10 @@ const run = async () => {
                 },
                 status: {
                     finished: false,
-                    message: `${move}'s Move`
+                    message: {
+                        [user.username]: `Your Move`,
+                        [partner.username]: `${user.username}'s Move`
+                    }
                 },
                 lastUpdated: new Date()
             };
@@ -165,13 +169,17 @@ const run = async () => {
             const query = { _id: id };
             const board = req.body;
             const game = await getGameById(id);
-            const move = alternateMove(game.players, game.move);
+            const move = opponantPlayer(game.players, game.move);
+            // `${game.move} has moved.\nNow it's ${move}'s move`
             const updatedGame = {
                 board: board,
                 move: move,
                 status: {
                     finished: false,
-                    message: `${game.move} has moved.\nNow it's ${move}'s move`,
+                    message: {
+                        [game.move]: `You have moved.\nNow it's ${move}'s move`,
+                        [move]: `${game.move} has moved.\nNow it's your move`
+                    },
                 },
                 lastUpdated: new Date()
             }
@@ -180,10 +188,24 @@ const run = async () => {
 
             if (winner) {
                 if (winner === "draw") {
-                    updatedGame.status = { finished: true, message: "This game is draw. You both won!" }
+                    updatedGame.winner = "You Both"
+                    updatedGame.status = {
+                        finished: true,
+                        message: {
+                            [game.move]: "This game is draw. You both won!",
+                            [move]: "This game is draw. You both won!"
+                        }
+                    }
                 }
                 else {
-                    updatedGame.status = { finished: true, message: `${winner} has won the match` }
+                    updatedGame.winner = winner
+                    updatedGame.status = {
+                        finished: true,
+                        message: {
+                            [winner]: "Congratulations! You've won the match!",
+                            [opponantPlayer(game.players, winner)]: `${winner} has won the match`
+                        }
+                    }
                 }
             }
             const result = await gamesCollection.updateOne(query, { $set: updatedGame });
