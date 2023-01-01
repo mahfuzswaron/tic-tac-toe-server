@@ -43,8 +43,11 @@ const gameResult = (board, pieces) => {
     if (winnerPiece) {
         return pieces[winnerPiece]
     }
-    else {
+    else if (winnerPiece === "") {
         return null
+    }
+    else {
+        return "draw"
     }
 
 };
@@ -161,29 +164,30 @@ const run = async () => {
             const id = ObjectId(req.params.id);
             const query = { _id: id };
             const board = req.body;
-            const game = getGameById(id);
+            const game = await getGameById(id);
             const move = alternateMove(game.players, game.move);
             const updatedGame = {
                 board: board,
                 move: move,
                 status: {
                     finished: false,
-                    message: `${game.move} has moved.\nNow it's ${move}'s move`
+                    message: `${game.move} has moved.\nNow it's ${move}'s move`,
                 },
                 lastUpdated: new Date()
             }
-            if (!Object.values(board).filter(x => x === "").length) { // checks if any move available
-                let message;
-                const winner = gameResult(board, game.pieces);
-                if (winner) {
-                    message = `${winner} has won the match`
-                }
-                else if (!winner) {
-                    message = "This game is draw. You both won!"
-                }
-                updatedGame.status = { finished: true, message: message }
-            }
 
+            const winner = gameResult(board, game.pieces);
+
+            if (winner) {
+                if (winner === "draw") {
+                    updatedGame.status = { finished: true, message: "This game is draw. You both won!" }
+                }
+                else {
+                    updatedGame.status = { finished: true, message: `${winner} has won the match` }
+                }
+            }
+            const result = await gamesCollection.updateOne(query, { $set: updatedGame });
+            res.send(result)
 
 
         })
