@@ -37,9 +37,8 @@ const gameResult = (board, pieces) => {
         let matchedCount = 0;
         set.forEach((x) => board[set[0]] === board[x] && matchedCount++)
         if (matchedCount === 3) winnerPiece = board[set[0]]
-        // console.log(mathcedCount)
     }
-    // console.log(winnerPiece);
+
     if (winnerPiece) {
         return pieces[winnerPiece]
     }
@@ -211,7 +210,6 @@ const run = async () => {
             const result = await gamesCollection.updateOne(query, { $set: updatedGame });
             res.send(result)
 
-
         })
 
     }
@@ -228,6 +226,26 @@ app.get("/", (req, res) => {
     res.send("Hello world");
 });
 
-app.listen(port, () => {
+const server = app.listen(port, () => {
     console.log(`tic tac toe is running on ${port}`)
-})
+});
+
+const io = require("socket.io")(server, {
+    cors: {
+        origin: "http://localhost:3000"
+    }
+});
+
+io.on("connection", (socket) => {
+
+    // join room by game id
+    socket.on("join_room", (gameId) => {
+        socket.join(gameId)
+    })
+
+    // set & get updated move
+    socket.on("set_move", (data) => {
+        socket.to(data?.gameId).emit("get_move", data)
+    })
+});
+
