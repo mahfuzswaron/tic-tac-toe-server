@@ -22,31 +22,47 @@ const gameResult = (board, pieces) => {
         ["a1", "a2", "a3"],
         ["b1", "b2", "b3"],
         ["c1", "c2", "c3"],
+
         ["a1", "b1", "c1"],
         ["a2", "b2", "c2"],
-        ["c1", "c2", "c3"],
-        ["a1", "b1", "c1"],
-        ["a2", "b2", "c3"],
         ["a3", "b3", "c3"],
+
         ["a1", "b2", "c3"],
         ["a3", "b2", "c1"]
     ];
-    let winnerPiece = null;
+
+    const matchedChars = [];
+
     for (let i = 0; i < keySets.length; i++) {
         const set = keySets[i];
         let matchedCount = 0;
         set.forEach((x) => board[set[0]] === board[x] && matchedCount++)
-        if (matchedCount === 3) winnerPiece = board[set[0]]
+        if (matchedCount === 3) {
+            matchedChars.push(board[set[0]])
+        }
     }
 
-    if (winnerPiece) {
-        return pieces[winnerPiece]
+    const mathedPiece = matchedChars.find(x => x !== "")
+
+    console.log(mathedPiece);
+
+    /*  
+    result logic:
+
+    'any piece' = win
+    undefined = not finished or draw
+    undefined & board doesn't have any space = draw
+    
+    */
+
+    if (mathedPiece) {
+        return pieces[mathedPiece]
     }
-    else if (winnerPiece === "") {
-        return null
-    }
-    else if (winnerPiece === null && !Object.values(board).filter(v => v === "").length) {
+    else if (!mathedPiece && !Object.values(board).filter(a => a === "").length) {
         return "draw"
+    }
+    else {
+        return null
     }
 
 };
