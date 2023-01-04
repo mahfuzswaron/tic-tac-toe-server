@@ -153,7 +153,7 @@ const run = async () => {
         app.get("/all-games/:user", async (req, res) => {
             const user = req.params.user;
             const query = { $or: [{ "players.initializer": user }, { "players.partner": user }] }
-            const games = await gamesCollection.find(query).toArray();
+            const games = await gamesCollection.find(query).sort({ lastUpdated: -1 }).toArray();
             // console.log(games)
             res.send(games);
         });
@@ -222,10 +222,12 @@ const run = async () => {
                         }
                     }
                 }
+                updatedGame.move = null;
             }
-            const result = await gamesCollection.updateOne(query, { $set: updatedGame });
-            res.send(result)
 
+            const result = await gamesCollection.updateOne(query, { $set: updatedGame });
+
+            res.send(result)
         })
 
     }
@@ -254,14 +256,14 @@ const io = require("socket.io")(server, {
 
 io.on("connection", (socket) => {
 
-    // join room by game id
-    socket.on("join_room", (gameId) => {
-        socket.join(gameId)
+    // join room by roomId
+    socket.on("join_room", (roomId) => {
+        socket.join(roomId)
     })
 
-    // set & get updated move
-    socket.on("set_move", (data) => {
-        socket.to(data?.gameId).emit("get_move", data)
+    // set & get updated data
+    socket.on("set_data", (data) => {
+        socket.to(data?.roomId).emit("get_data", data)
     })
 });
 
