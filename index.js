@@ -192,8 +192,8 @@ const run = async () => {
                 status: {
                     finished: false,
                     message: {
-                        [game.move]: `You have moved.\nNow it's ${move}'s move`,
-                        [move]: `${game.move} has moved.\nNow it's your move`
+                        [game.move]: `You've made your move.\nWaiting for them.`,
+                        [move]: `${game.move} just made their move.\nIt's your turn to play now.`
                     },
                 },
                 lastUpdated: new Date()
@@ -203,12 +203,12 @@ const run = async () => {
 
             if (winner) {
                 if (winner === "draw") {
-                    updatedGame.winner = "You Both"
+                    updatedGame.winner = null
                     updatedGame.status = {
                         finished: true,
                         message: {
-                            [game.move]: "This game is draw. You both won!",
-                            [move]: "This game is draw. You both won!"
+                            [game.move]: "It's a draw!",
+                            [move]: "It's a draw!"
                         }
                     }
                 }
@@ -217,8 +217,8 @@ const run = async () => {
                     updatedGame.status = {
                         finished: true,
                         message: {
-                            [winner]: "Congratulations! You've won the match!",
-                            [opponantPlayer(game.players, winner)]: `${winner} has won the match`
+                            [winner]: "You won!",
+                            [opponantPlayer(game.players, winner)]: `${winner} has won!`
                         }
                     }
                 }
