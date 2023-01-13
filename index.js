@@ -42,23 +42,12 @@ const gameResult = (board, pieces) => {
         }
     }
 
-    const mathedPiece = matchedChars.find(x => x !== "")
+    const matchedPiece = matchedChars.find(x => x !== "")
 
-    console.log(mathedPiece);
-
-    /*  
-    result logic:
-
-    'any piece' = win
-    undefined = not finished or draw
-    undefined & board doesn't have any space = draw
-    
-    */
-
-    if (mathedPiece) {
-        return pieces[mathedPiece]
+    if (matchedPiece) {
+        return pieces[matchedPiece]
     }
-    else if (!mathedPiece && !Object.values(board).filter(a => a === "").length) {
+    else if (!matchedPiece && !Object.values(board).filter(a => a === "").length) {
         return "draw"
     }
     else {
@@ -154,7 +143,6 @@ const run = async () => {
             const user = req.params.user;
             const query = { $or: [{ "players.initializer": user }, { "players.partner": user }] }
             const games = await gamesCollection.find(query).sort({ lastUpdated: -1 }).toArray();
-            // console.log(games)
             res.send(games);
         });
 
@@ -171,13 +159,6 @@ const run = async () => {
             res.send(game);
         });
 
-        /*
-        game logic:
-        if the board is completed: check who wins or draw
-        else: update current board
-
-        */
-
         // update a game 
         app.patch("/play/:id", async (req, res) => {
             const id = ObjectId(req.params.id);
@@ -185,7 +166,6 @@ const run = async () => {
             const board = req.body;
             const game = await getGameById(id);
             const move = opponantPlayer(game.players, game.move);
-            // `${game.move} has moved.\nNow it's ${move}'s move`
             const updatedGame = {
                 board: board,
                 move: move,
@@ -250,7 +230,7 @@ const server = app.listen(port, () => {
 
 const io = require("socket.io")(server, {
     cors: {
-        origin: "http://localhost:3000"
+        origin: "*"
     }
 });
 
