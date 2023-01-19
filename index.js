@@ -111,11 +111,12 @@ const run = async () => {
             if (!partner) {
                 return res.send({ error: "user not found. please enter a valid email" })
             }
-            const move = user.username;
+            const [player1, player2] = [user.username, partner.username];
             const game = {
-                players: { initializer: user.username, partner: partner.username },
-                pieces: { "x": user.username, "o": partner.username },
-                move: user.username,
+                players: { initializer: player1, partner: player2 },
+                pieces: { "x": player1, "o": player2 },
+                move: player1,
+                moveCount: 0,
                 board: {
                     a1: "", a2: "", a3: "",
                     b1: "", b2: "", b3: "",
@@ -124,8 +125,8 @@ const run = async () => {
                 status: {
                     finished: false,
                     message: {
-                        [user.username]: `Your Move`,
-                        [partner.username]: `${user.username}'s Move`
+                        [player1]: `Your Move`,
+                        [player2]: `${player1}'s Move`
                     }
                 },
                 lastUpdated: new Date()
@@ -169,6 +170,7 @@ const run = async () => {
             const updatedGame = {
                 board: board,
                 move: move,
+                moveCount: game.moveCount + 1,
                 status: {
                     finished: false,
                     message: {
@@ -179,30 +181,33 @@ const run = async () => {
                 lastUpdated: new Date()
             }
 
-            const winner = gameResult(board, game.pieces);
+            if (game.moveCount > 4) {
+                const winner = gameResult(board, game.pieces);
 
-            if (winner) {
-                if (winner === "draw") {
-                    updatedGame.winner = null
-                    updatedGame.status = {
-                        finished: true,
-                        message: {
-                            [game.move]: "It's a draw!",
-                            [move]: "It's a draw!"
+                if (winner) {
+                    if (winner === "draw") {
+                        updatedGame.winner = null
+                        updatedGame.status = {
+                            finished: true,
+                            message: {
+                                [game.move]: "It's a draw!",
+                                [move]: "It's a draw!"
+                            }
                         }
                     }
-                }
-                else {
-                    updatedGame.winner = winner
-                    updatedGame.status = {
-                        finished: true,
-                        message: {
-                            [winner]: "You won!",
-                            [opponantPlayer(game.players, winner)]: `${winner} has won!`
+                    else {
+                        updatedGame.winner = winner
+                        updatedGame.status = {
+                            finished: true,
+                            message: {
+                                [winner]: "You won!",
+                                [move]: `${winner} has won!`
+                            }
                         }
                     }
+                    updatedGame.move = null;
                 }
-                updatedGame.move = null;
+
             }
 
             const result = await gamesCollection.updateOne(query, { $set: updatedGame });
